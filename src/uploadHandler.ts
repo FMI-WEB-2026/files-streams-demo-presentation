@@ -13,17 +13,34 @@ const router = Router();
 const uploadDir = path.join(__dirname, '../uploads');
 
 // Ensure uploads directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+(async () => {
+  try {
+    await fs.promises.mkdir(uploadDir, { recursive: true });
+  } catch (err) {
+    console.error("Error creating upload directory:", err);
+  }
+})();
 
 // --- 2. File Organization ---
 // Multer Disk Storage configures how files are saved.
 // It's crucial to rename files to avoid overwriting and security risks.
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Files are saved into the 'uploads' directory
-    cb(null, uploadDir);
+  destination: async (req, file, cb) => {
+    try {
+      // Files are saved into the 'uploads' directory, organized by Year/Month/Day
+      const date = new Date();
+      const year = date.getFullYear().toString();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+
+      const dynamicDir = path.join(uploadDir, year, month, day);
+      // mkdir with recursive: true automatically ignores if the directory already exists
+      await fs.promises.mkdir(dynamicDir, { recursive: true });
+
+      cb(null, dynamicDir);
+    } catch (err: any) {
+      cb(err, '');
+    }
   },
   filename: (req, file, cb) => {
     // We prepend a unique timestamp to organize and avoid name collisions
@@ -34,6 +51,27 @@ const storage = multer.diskStorage({
 
 // Multer middleware setup
 const upload = multer({ storage });
+
+// Helper function to recursively find all JSON files in the uploads directory asynchronously
+async function getAllJsonFiles(dir: string, fileList: string[] = []): Promise<string[]> {
+  try {
+    await fs.promises.access(dir);
+  } catch {
+    return fileList; // Directory doesn't exist
+  }
+
+  const files = await fs.promises.readdir(dir);
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    const stat = await fs.promises.stat(fullPath);
+    if (stat.isDirectory()) {
+      await getAllJsonFiles(fullPath, fileList);
+    } else if (file.endsWith('.json')) {
+      fileList.push(fullPath);
+    }
+  }
+  return fileList;
+}
 
 // POST endpoint to handle multiple file uploads
 // 'documents' is the name of the field in our HTML form
@@ -53,12 +91,12 @@ router.post('/upload', upload.array('documents', 10), async (req, res) => {
 
       // --- DEDUPLICATION (Checking if file already exists) ---
       // We check all existing metadata files to see if this exact MD5 hash was already uploaded
-      const existingFiles = fs.readdirSync(uploadDir).filter(f => f.endsWith('.json'));
+      const existingFiles = await getAllJsonFiles(uploadDir);
       let isDuplicate = false;
       let duplicateMeta = null;
 
-      for (const metaFile of existingFiles) {
-        const content = fs.readFileSync(path.join(uploadDir, metaFile), 'utf-8');
+      for (const metaFilePath of existingFiles) {
+        const content = await fs.promises.readFile(metaFilePath, 'utf-8');
         const meta = JSON.parse(content);
         if (meta.md5Hash === fileStats.md5Hash) {
           isDuplicate = true;
@@ -69,16 +107,19 @@ router.post('/upload', upload.array('documents', 10), async (req, res) => {
 
       if (isDuplicate) {
         // If it's a duplicate, we delete BOTH the newly uploaded original AND the newly compressed file
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        if (fs.existsSync(compressedPath)) fs.unlinkSync(compressedPath);
+        await fs.promises.unlink(file.path).catch(() => { });
+        await fs.promises.unlink(compressedPath).catch(() => { });
 
         return duplicateMeta; // Just return the info for the file that already exists!
       }
 
       // If it's NOT a duplicate, we proceed to save the new metadata
+      // Calculate relative path for the frontend (e.g., "2026/05/07/123123-file.pdf")
+      const relativePath = path.relative(uploadDir, file.path).replace(/\\/g, '/');
+
       const metadata = {
         originalName: file.originalname,
-        savedAs: file.filename,
+        savedAs: relativePath,
         mimetype: file.mimetype,
         sizeBytes: file.size,
         storagePath: file.path,
@@ -86,12 +127,10 @@ router.post('/upload', upload.array('documents', 10), async (req, res) => {
       };
 
       // Save metadata to a JSON file so we don't lose it on refresh!
-      fs.writeFileSync(compressedPath + '.json', JSON.stringify(metadata, null, 2));
+      await fs.promises.writeFile(compressedPath + '.json', JSON.stringify(metadata, null, 2));
 
       // We don't need the original uncompressed file anymore, so we delete it to save space!
-      if (fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
-      }
+      await fs.promises.unlink(file.path).catch(() => { });
 
       return metadata;
     }));
@@ -108,23 +147,25 @@ router.post('/upload', upload.array('documents', 10), async (req, res) => {
 });
 
 // GET endpoint to download the compressed file
-router.get('/download/:filename', (req, res) => {
-  const filename = req.params.filename;
+// We use a wildcard (*) because the path now includes folders (e.g. 2026/05/07/filename)
+router.get('/download/*', async (req, res) => {
+  const fileRoute = (req.params as any)[0];
   const originalName = req.query.originalName as string;
 
   // Basic security check to prevent directory traversal
-  if (filename.includes('..') || filename.includes('/')) {
+  if (fileRoute.includes('..')) {
     return res.status(400).send('Invalid filename');
   }
 
-  const filePath = path.join(uploadDir, filename);
+  const filePath = path.join(uploadDir, fileRoute);
 
-  if (fs.existsSync(filePath)) {
+  try {
+    await fs.promises.access(filePath);
     // Express provides a handy res.download helper, but under the hood, 
     // it uses streams (fs.createReadStream) to send the file to the client!
 
     // If the client provided the originalName query parameter, we construct the download name
-    const downloadName = originalName ? originalName + '.gz' : filename;
+    const downloadName = originalName ? originalName + '.gz' : fileRoute;
 
     res.download(filePath, downloadName, (err) => {
       if (err) {
@@ -134,21 +175,20 @@ router.get('/download/:filename', (req, res) => {
         }
       }
     });
-  } else {
+  } catch {
     res.status(404).send('File not found');
   }
 });
 
 // GET endpoint to fetch all previously uploaded files
-router.get('/files', (req, res) => {
+router.get('/files', async (req, res) => {
   try {
-    const files = fs.readdirSync(uploadDir);
-    const metadataFiles = files.filter(f => f.endsWith('.json'));
+    const metadataFiles = await getAllJsonFiles(uploadDir);
 
-    const results = metadataFiles.map(file => {
-      const content = fs.readFileSync(path.join(uploadDir, file), 'utf-8');
+    const results = await Promise.all(metadataFiles.map(async (filePath) => {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
       return JSON.parse(content);
-    });
+    }));
 
     // Send the array of past files
     res.json(results);

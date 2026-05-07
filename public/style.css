@@ -1,9 +1,9 @@
 :root {
-  --bg-color: #f1f5f9;
+  --bg-color: #ffffff;
   --text-color: #0f172a;
   --accent-color: #2563eb;
   --accent-glow: rgba(37, 99, 235, 0.3);
-  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(255, 255, 255, 1);
   --glass-border: rgba(0, 0, 0, 0.1);
   --success: #10b981;
 }
@@ -22,7 +22,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: radial-gradient(circle at top right, #e2e8f0, var(--bg-color));
 }
 
 .container {

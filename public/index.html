@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamDrop | File Upload Demo</title>
+  <meta name="description" content="A premium file upload and streams demonstration project for webdev">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>StreamDrop</h1>
+      <p>Upload a file to see Node.js streams in action</p>
+    </header>
+
+    <main>
+      <form id="uploadForm" class="upload-area">
+        <input type="file" id="fileInput" name="documents" multiple required hidden>
+        <div class="upload-box" id="dropZone">
+          <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <span class="upload-text">Drag & drop your files here or <span class="highlight">browse</span></span>
+        </div>
+        <button type="submit" class="upload-btn" id="submitBtn" disabled>Upload Files</button>
+      </form>
+
+      <div class="progress-container hidden" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div id="resultsContainer"></div>
+
+      <template id="resultCardTemplate">
+        <div class="results">
+          <h2>File Analysis</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-label">Original Name</span>
+              <span class="stat-value resName">-</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Original Size</span>
+              <span class="stat-value resSize">-</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Line Count</span>
+              <span class="stat-value resLines">-</span>
+            </div>
+            <div class="stat-card full-width">
+              <span class="stat-label">Compressed Size</span>
+              <span class="stat-value highlight resCompSize">-</span>
+            </div>
+            <div class="stat-card full-width">
+              <span class="stat-label">MD5 Hash (Calculated via Stream)</span>
+              <span class="stat-value monospace resHash">-</span>
+            </div>
+            <div class="stat-card full-width">
+              <span class="stat-label">Saved As (Server path)</span>
+              <span class="stat-value monospace resPath">-</span>
+            </div>
+            <div class="stat-card full-width download-section">
+              <a href="#" class="upload-btn download-btn">Download Compressed (.gz)</a>
+            </div>
+          </div>
+        </div>
+      </template>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

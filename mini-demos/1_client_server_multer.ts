@@ -19,6 +19,5 @@ app.post('/upload', upload.single('document'), (req, res) => {
 });
 
 app.listen(3001, () => {
-  console.log('Човек 1 Демо: Сървърът слуша на порт 3001');
-  console.log('Използвайте Postman или прост HTML формуляр, за да пратите файл на http://localhost:3001/upload');
+  console.log('Сървърът слуша на порт 3001');
 });

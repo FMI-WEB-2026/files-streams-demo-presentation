@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 function streamDemo() {
-  console.log("=== ДЕМО: АНАТОМИЯ НА СТРИЙМА ===");
+  console.log("=== ДЕМО: СТРИЙМ ===");
 
   const readStream = fs.createReadStream(__filename, { highWaterMark: 64 });
 

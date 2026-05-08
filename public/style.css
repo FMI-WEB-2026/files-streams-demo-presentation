@@ -40,6 +40,7 @@ h1 {
   font-weight: 600;
   background: linear-gradient(to right, #2563eb, #9333ea);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.5rem;
 }
@@ -66,7 +67,8 @@ header p {
   backdrop-filter: blur(10px);
 }
 
-.upload-box:hover, .upload-box.dragover {
+.upload-box:hover,
+.upload-box.dragover {
   border-color: var(--accent-color);
   box-shadow: 0 0 20px var(--accent-glow);
   transform: translateY(-2px);
@@ -206,6 +208,13 @@ header p {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

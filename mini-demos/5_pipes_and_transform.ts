@@ -1,7 +1,6 @@
 import fs from 'fs';
 import { Transform, pipeline } from 'stream';
 
-
 class UppercaseTransform extends Transform {
   _transform(chunk: Buffer, encoding: string, callback: Function) {
     const uppercased = chunk.toString('utf-8').toUpperCase();
@@ -22,7 +21,6 @@ function pipelineDemo() {
   const upperStream = new UppercaseTransform();
 
   const outputStream = fs.createWriteStream('tiny_UPPERCASE.txt');
-
 
   pipeline(
     inputStream,

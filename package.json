@@ -7,8 +7,6 @@
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "demo1": "ts-node mini-demos/1_client_server_multer.ts",
-    "demo2": "ts-node mini-demos/2_organization_security.ts",
-    "demo3": "ts-node mini-demos/3_fs_and_buffers.ts",
     "demo4": "ts-node mini-demos/4_anatomy_of_streams.ts",
     "demo5": "ts-node mini-demos/5_pipes_and_transform.ts",
     "build": "tsc"

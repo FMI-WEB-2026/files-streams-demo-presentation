@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressBar = document.getElementById('progressBar');
   const resultsCard = document.getElementById('resultsCard');
 
-  // Load previously uploaded files when the page refreshes
   fetch('/api/files')
     .then(res => res.json())
     .then(files => {
@@ -17,10 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(console.error);
 
-  // Handle clicking the dropzone to open file dialog
   dropZone.addEventListener('click', () => fileInput.click());
 
-  // Handle Drag & Drop
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     dropZone.addEventListener(eventName, preventDefaults, false);
   });
@@ -67,22 +64,29 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     if (!fileInput.files.length) return;
 
+    const MAX_SIZE_MB = 50;
     const formData = new FormData();
     for (let i = 0; i < fileInput.files.length; i++) {
-      formData.append('documents', fileInput.files[i]);
+      const file = fileInput.files[i];
+      
+      // Frontend validation: stop upload if file is too big
+      if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+        alert(`Файлът "${file.name}" е твърде голям! Максималният размер е ${MAX_SIZE_MB}MB.`);
+        return; 
+      }
+      
+      formData.append('documents', file);
     }
 
-    // UI Updates
     submitBtn.disabled = true;
     submitBtn.textContent = 'Uploading...';
     progressContainer.classList.remove('hidden');
     const resultsContainer = document.getElementById('resultsContainer');
-    resultsContainer.innerHTML = ''; // Clear previous results
+    resultsContainer.innerHTML = ''; 
     progressBar.style.width = '0%';
 
-    // Use XMLHttpRequest for upload progress tracking
     const xhr = new XMLHttpRequest();
-    
+
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) {
         const percentComplete = (e.loaded / e.total) * 100;
@@ -93,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     xhr.addEventListener('load', () => {
       if (xhr.status === 200) {
         const response = JSON.parse(xhr.responseText);
-        // response.results will be an array of processed files
+
         if (response.results && Array.isArray(response.results)) {
           response.results.forEach(fileData => displayResults(fileData));
         }
@@ -123,19 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
     clone.querySelector('.resLines').textContent = data.lineCount.toLocaleString();
     clone.querySelector('.resHash').textContent = data.md5Hash;
     clone.querySelector('.resPath').textContent = data.storagePath;
-    
-    // Set up download button
+
     const downloadBtn = clone.querySelector('.download-btn');
     const compressedFileName = data.savedAs + '.gz';
-    
-    // Add ?originalName query param so the server can set the correct download name
+
     downloadBtn.href = `/api/download/${compressedFileName}?originalName=${encodeURIComponent(data.originalName)}`;
-    
-    // This tells the browser to use this name, though the server header is more reliable
+
     downloadBtn.download = data.originalName + '.gz';
-    
+
     const resultsContainer = document.getElementById('resultsContainer');
-    // We add a class to trigger animation if wanted, template div already has .results
+
     resultsContainer.appendChild(clone);
   }
 

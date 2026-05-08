@@ -68,13 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const formData = new FormData();
     for (let i = 0; i < fileInput.files.length; i++) {
       const file = fileInput.files[i];
-      
+
       // Frontend validation: stop upload if file is too big
       if (file.size > MAX_SIZE_MB * 1024 * 1024) {
         alert(`Файлът "${file.name}" е твърде голям! Максималният размер е ${MAX_SIZE_MB}MB.`);
-        return; 
+        return;
       }
-      
+
       formData.append('documents', file);
     }
 
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.textContent = 'Uploading...';
     progressContainer.classList.remove('hidden');
     const resultsContainer = document.getElementById('resultsContainer');
-    resultsContainer.innerHTML = ''; 
+    // resultsContainer.innerHTML = ''; // Premaxvame iztrivaneto na starite failove
     progressBar.style.width = '0%';
 
     const xhr = new XMLHttpRequest();
@@ -120,13 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const template = document.getElementById('resultCardTemplate');
     const clone = template.content.cloneNode(true);
 
-    clone.querySelector('h2').textContent = `Analysis: ${data.originalName}`;
-    clone.querySelector('.resName').textContent = data.originalName;
+    clone.querySelector('h2').textContent = data.originalName;
+    const serverFileName = data.savedAs.split('/').pop();
+    clone.querySelector('.resName').textContent = serverFileName;
     clone.querySelector('.resSize').textContent = formatBytes(data.sizeBytes);
     clone.querySelector('.resCompSize').textContent = formatBytes(data.compressedSize);
     clone.querySelector('.resLines').textContent = data.lineCount.toLocaleString();
     clone.querySelector('.resHash').textContent = data.md5Hash;
-    clone.querySelector('.resPath').textContent = data.storagePath;
 
     const downloadBtn = clone.querySelector('.download-btn');
     const compressedFileName = data.savedAs + '.gz';

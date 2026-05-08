@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts",
+    "dev": "nodemon --ignore uploads/ --ignore temp/ src/server.ts",
     "demo1": "ts-node mini-demos/1_client_server_multer.ts",
     "demo4": "ts-node mini-demos/4_anatomy_of_streams.ts",
     "demo5": "ts-node mini-demos/5_pipes_and_transform.ts",

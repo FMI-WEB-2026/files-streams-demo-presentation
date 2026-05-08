@@ -5,6 +5,13 @@ const app = express();
 const upload = multer({ dest: 'temp/' });
 
 app.post('/upload', upload.single('document'), (req, res) => {
+  const isMultipart = req.headers['content-type']?.includes('multipart/form-data');
+
+  if (!isMultipart) {
+    console.log("❌ Отхвърлена заявка: Не е multipart/form-data");
+    return res.status(400).send("Грешка: Трябва да изпратите multipart/form-data заявка!");
+  }
+
   console.log("=== ПРИСТИГНА МУЛТИПАРТ ЗАЯВКА ===");
 
   if (req.file) {

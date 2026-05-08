@@ -88,8 +88,10 @@ router.post('/upload', (req, res) => {
     try {
 
       const results = await Promise.all(files.map(async (file) => {
+        console.log(`Processing file: ${file.path}`);
         const compressedPath = file.path + '.gz';
         const fileStats = await processFileStream(file.path, compressedPath);
+        console.log(`processFileStream finished for: ${file.path}`);
 
         const existingFiles = await getAllJsonFiles(uploadDir);
         let isDuplicate = false;
